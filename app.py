@@ -9,6 +9,25 @@ import numpy as np  # [web:19]
 import pandas as pd  # [web:19]
 from PIL import Image  # [web:19]
 import streamlit as st  # [web:1][web:13]
+import os
+import gdown  # add gdown to requirements.txt
+from tensorflow.keras.models import load_model
+
+MODEL_PATH = "plant_disease_model.h5"
+DRIVE_URL = "https://drive.google.com/file/d/1DAWfGqtpzGT9khOvH79McW4SG_UBheft/view?usp=drive_open"  # replace
+
+def ensure_model_downloaded():
+    if not os.path.exists(MODEL_PATH):
+        gdown.download(DRIVE_URL, MODEL_PATH, quiet=False)
+
+@st.cache_resource
+def load_model_and_classes():
+    ensure_model_downloaded()
+    model = load_model(MODEL_PATH)
+    # load class_names.json from repo as before
+    ...
+    return model, class_names
+
 
 # ------------------------------------------------
 # Page configuration & base CSS
