@@ -226,7 +226,7 @@ with st.sidebar:
     st.caption("Prototype. Not a substitute for expert agronomic advice.")
 
 # ============================================================
-# Disease protocols
+# Disease protocols (keep your detailed dict here)
 # ============================================================
 DISEASE_PROTOCOLS = {
     "Tomato___Early_blight": {
@@ -245,7 +245,7 @@ DISEASE_PROTOCOLS = {
             "Improve airflow via staking/pruning and avoid late evening overhead irrigation.",
         ],
     },
-    # ... keep your other protocols here unchanged ...
+    # Add your other entries here (Potato, Grape, Apple, Corn, etc.)
 }
 
 DEFAULT_PROTOCOL = {
@@ -267,7 +267,7 @@ DEFAULT_PROTOCOL = {
 # ============================================================
 # Utility: preprocessing, prediction, farm data
 # ============================================================
-def preprocess_image(uploaded_file, target_size=(160, 160)):
+def preprocess_image(uploaded_file, target_size=(224, 224)):
     image = Image.open(uploaded_file).convert("RGB")
     image = image.resize(target_size)
     img_array = np.array(image).astype("float32") / 255.0
@@ -408,7 +408,7 @@ with tabs[0]:
         )
         st.metric(
             label="Input Size",
-            value="160 × 160 × 3",
+            value="224 × 224 × 3",
             help="Standard RGB size used during preprocessing.",
         )
 
@@ -500,7 +500,7 @@ with tabs[0]:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ============================================================
-# Tab 2: Treatment Protocol (simplified, no visual placeholder)
+# Tab 2: Treatment Protocol (simplified)
 # ============================================================
 with tabs[1]:
     st.markdown("### 🌿 Integrated Treatment Protocol")
