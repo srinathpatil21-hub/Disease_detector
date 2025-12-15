@@ -598,7 +598,6 @@ with tabs[0]:
         )
 
     st.markdown("</div>", unsafe_allow_html=True)
-
 # ============================================================
 # Tab 2: Treatment Protocol
 # ============================================================
@@ -634,7 +633,7 @@ with tabs[1]:
         st.markdown("**Symptoms (field-level)**")
         st.markdown("\n".join([f"- {item}" for item in protocol["symptoms"]]))
         st.markdown("")
-        st.markmarkdown("**Causes & Favouring Conditions**")
+        st.markdown("**Causes & Favouring Conditions**")
         st.markdown("\n".join([f"- {item}" for item in protocol["causes"]]))
 
     with col2:
