@@ -5,33 +5,87 @@ import os
 import time
 from datetime import datetime, timedelta
 
-import numpy as np  # [web:19]
-import pandas as pd  # [web:19]
-from PIL import Image  # [web:19]
-import streamlit as st  # [web:1][web:13]
-import os
-import gdown  # add gdown to requirements.txt
-from tensorflow.keras.models import load_model
+import numpy as np
+import pandas as pd
+from PIL import Image
+import streamlit as st
 
+import gdown
+from tensorflow.keras.models import load_model as keras_load_model
+
+# ============================================================
+# Model download & loading (Google Drive)
+# ============================================================
 MODEL_PATH = "plant_disease_model.h5"
-DRIVE_URL = "https://drive.google.com/file/d/1DAWfGqtpzGT9khOvH79McW4SG_UBheft/view?usp=drive_open"  # replace
+DRIVE_ID = "1DAWfGqtpzGT9khOvH79McW4SG_UBheft"  # your file id
+DRIVE_URL = f"https://drive.google.com/uc?id={DRIVE_ID}"  # direct-download style link
 
 def ensure_model_downloaded():
     if not os.path.exists(MODEL_PATH):
         gdown.download(DRIVE_URL, MODEL_PATH, quiet=False)
 
-@st.cache_resource
+# Default disease list (used if class_names.json missing)
+DISEASE_LIST = [
+    "Apple___Apple_scab",
+    "Apple___Black_rot",
+    "Apple___Cedar_apple_rust",
+    "Apple___healthy",
+    "Blueberry___healthy",
+    "Cherry___Powdery_mildew",
+    "Cherry___healthy",
+    "Corn___Cercospora_leaf_spot",
+    "Corn___Common_rust",
+    "Corn___Northern_Leaf_Blight",
+    "Corn___healthy",
+    "Grape___Black_rot",
+    "Grape___Esca_(Black_Measles)",
+    "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)",
+    "Grape___healthy",
+    "Orange___Haunglongbing_(Citrus_greening)",
+    "Peach___Bacterial_spot",
+    "Peach___healthy",
+    "Pepper_bell___Bacterial_spot",
+    "Pepper_bell___healthy",
+    "Potato___Early_blight",
+    "Potato___Late_blight",
+    "Potato___healthy",
+    "Raspberry___healthy",
+    "Soybean___healthy",
+    "Squash___Powdery_mildew",
+    "Strawberry___Leaf_scorch",
+    "Strawberry___healthy",
+    "Tomato___Bacterial_spot",
+    "Tomato___Early_blight",
+    "Tomato___Late_blight",
+    "Tomato___Leaf_Mold",
+    "Tomato___Septoria_leaf_spot",
+    "Tomato___Spider_mites",
+    "Tomato___Target_Spot",
+    "Tomato___Yellow_Leaf_Curl_Virus",
+    "Tomato___Mosaic_virus",
+    "Tomato___healthy",
+]
+
+@st.cache_resource(show_spinner="Loading CNN model and class names...")
 def load_model_and_classes():
+    """
+    Download model from Google Drive if needed, load it, and load class names.
+    """
     ensure_model_downloaded()
-    model = load_model(MODEL_PATH)
-    # load class_names.json from repo as before
-    ...
+    model = keras_load_model(MODEL_PATH)
+
+    class_file = "class_names.json"
+    if os.path.exists(class_file):
+        with open(class_file, "r", encoding="utf-8") as f:
+            class_names = json.load(f)
+    else:
+        class_names = DISEASE_LIST
+
     return model, class_names
 
-
-# ------------------------------------------------
+# ============================================================
 # Page configuration & base CSS
-# ------------------------------------------------
+# ============================================================
 st.set_page_config(
     page_title="Plant Disease Classifier",
     page_icon="🌱",
@@ -39,7 +93,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Glassmorphism-style custom CSS
 st.markdown(
     """
     <style>
@@ -81,12 +134,6 @@ st.markdown(
         letter-spacing: 0.08em;
         text-transform: uppercase;
         color: #a5b4fc;
-    }
-    .metric-label {
-        font-size: 0.95rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
     }
     .disease-badge {
         display: inline-flex;
@@ -162,9 +209,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ------------------------------------------------
+# ============================================================
 # Sidebar: Branding
-# ------------------------------------------------
+# ============================================================
 with st.sidebar:
     st.markdown(
         """
@@ -190,71 +237,14 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("##### 👥 Project Info")
     st.markdown("- **Model:** CNN (Keras/TensorFlow)")
-    st.markdown("- **Dataset:** Plant Village (via GitHub repo) [web:0]")
+    st.markdown("- **Dataset:** PlantVillage / MobileNetV2")
 
     st.markdown("---")
     st.caption("Prototype. Not a substitute for expert agronomic advice.")
 
-# ------------------------------------------------
-# Disease metadata derived from dataset description
-# (you can adjust to match your class_names.json exactly)
-# ------------------------------------------------
-DISEASE_LIST = [
-    # Apple
-    "Apple___Apple_scab",
-    "Apple___Black_rot",
-    "Apple___Cedar_apple_rust",
-    "Apple___healthy",
-    # Blueberry
-    "Blueberry___healthy",
-    # Cherry
-    "Cherry___Powdery_mildew",
-    "Cherry___healthy",
-    # Corn
-    "Corn___Cercospora_leaf_spot",
-    "Corn___Common_rust",
-    "Corn___Northern_Leaf_Blight",
-    "Corn___healthy",
-    # Grape
-    "Grape___Black_rot",
-    "Grape___Esca_(Black_Measles)",
-    "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)",
-    "Grape___healthy",
-    # Orange
-    "Orange___Haunglongbing_(Citrus_greening)",
-    # Peach
-    "Peach___Bacterial_spot",
-    "Peach___healthy",
-    # Pepper
-    "Pepper_bell___Bacterial_spot",
-    "Pepper_bell___healthy",
-    # Potato
-    "Potato___Early_blight",
-    "Potato___Late_blight",
-    "Potato___healthy",
-    # Raspberry
-    "Raspberry___healthy",
-    # Soybean
-    "Soybean___healthy",
-    # Squash
-    "Squash___Powdery_mildew",
-    # Strawberry
-    "Strawberry___Leaf_scorch",
-    "Strawberry___healthy",
-    # Tomato (10)
-    "Tomato___Bacterial_spot",
-    "Tomato___Early_blight",
-    "Tomato___Late_blight",
-    "Tomato___Leaf_Mold",
-    "Tomato___Septoria_leaf_spot",
-    "Tomato___Spider_mites",
-    "Tomato___Target_Spot",
-    "Tomato___Yellow_Leaf_Curl_Virus",
-    "Tomato___Mosaic_virus",
-    "Tomato___healthy",
-]
-
-# A compact subset of protocols (extend as you wish)
+# ============================================================
+# Disease protocols (same as before)
+# ============================================================
 DISEASE_PROTOCOLS = {
     "Tomato___Early_blight": {
         "symptoms": [
@@ -358,7 +348,6 @@ DISEASE_PROTOCOLS = {
     },
 }
 
-# Default fall-back protocol for any class
 DEFAULT_PROTOCOL = {
     "symptoms": [
         "Visual symptoms vary with crop and pathogen.",
@@ -375,71 +364,22 @@ DEFAULT_PROTOCOL = {
     ],
 }
 
-# ------------------------------------------------
-# Utility: Load model & classes
-# ------------------------------------------------
-
-
-@st.cache_resource(show_spinner="Loading CNN model and class names...")
-def load_model_and_classes():
-    """
-    Load a TensorFlow/Keras model (model.h5) and class_names.json if present. [web:12][web:9]
-    """
-    model = None
-    class_names = DISEASE_LIST
-
-    # Try to load model.h5 (if available)
-    try:
-        from tensorflow.keras.models import load_model as keras_load_model  # type: ignore
-
-        model_path = "model.h5"
-        if os.path.exists(model_path):
-            model = keras_load_model(model_path)
-    except Exception:
-        # Silent fail to simulation if TF is not installed or model missing
-        model = None
-
-    # Try to load class_names.json
-    class_file = "class_names.json"
-    if os.path.exists(class_file):
-        try:
-            with open(class_file, "r", encoding="utf-8") as f:
-                loaded_classes = json.load(f)
-            if isinstance(loaded_classes, list) and len(loaded_classes) > 0:
-                class_names = loaded_classes
-        except Exception:
-            pass
-
-    return model, class_names
-
-
-def preprocess_image(uploaded_file, target_size=(224, 224)):
-    """
-    Convert uploaded image to RGB, resize, normalize, and add batch dimension. [web:19]
-    """
+# ============================================================
+# Utility: preprocessing, prediction, farm data
+# ============================================================
+def preprocess_image(uploaded_file, target_size=(160, 160)):
     image = Image.open(uploaded_file).convert("RGB")
     image = image.resize(target_size)
     img_array = np.array(image).astype("float32") / 255.0
     img_batch = np.expand_dims(img_array, axis=0)
     return image, img_batch
 
-
-def predict_or_simulate(model, img_batch, class_names):
-    """
-    Use real model if available; otherwise simulate probabilistic output. [web:19]
-    """
-    if model is not None:
-        preds = model.predict(img_batch)
-        preds = np.squeeze(preds)
-        if preds.ndim == 0:
-            preds = np.array([preds])
-        probs = preds / np.sum(preds)
-    else:
-        seed_value = int(np.sum(img_batch) * 1e6) % (2**31 - 1)
-        rng = np.random.default_rng(seed_value)
-        logits = rng.normal(loc=0.0, scale=1.0, size=len(class_names))
-        exp_logits = np.exp(logits - np.max(logits))
-        probs = exp_logits / np.sum(exp_logits)
+def predict(model, img_batch, class_names):
+    preds = model.predict(img_batch)
+    preds = np.squeeze(preds)
+    if preds.ndim == 0:
+        preds = np.array([preds])
+    probs = preds / np.sum(preds)
 
     top_indices = np.argsort(probs)[::-1][:3]
     top_probs = probs[top_indices]
@@ -457,23 +397,13 @@ def predict_or_simulate(model, img_batch, class_names):
 
     return primary_class, primary_confidence, differential
 
-
 def generate_farm_health_data(days=7):
-    """
-    Simulate 7-day time series for humidity, temperature, and soil pH. [web:19]
-    """
     today = datetime.now()
     dates = [today - timedelta(days=i) for i in range(days)][::-1]
 
-    humidity = np.clip(
-        np.random.normal(loc=78, scale=8, size=days), 40, 100
-    )
-    temperature = np.clip(
-        np.random.normal(loc=27, scale=3, size=days), 15, 40
-    )
-    soil_ph = np.clip(
-        np.random.normal(loc=6.4, scale=0.3, size=days), 4.5, 8.5
-    )
+    humidity = np.clip(np.random.normal(loc=78, scale=8, size=days), 40, 100)
+    temperature = np.clip(np.random.normal(loc=27, scale=3, size=days), 15, 40)
+    soil_ph = np.clip(np.random.normal(loc=6.4, scale=0.3, size=days), 4.5, 8.5)
 
     df = pd.DataFrame(
         {
@@ -486,11 +416,7 @@ def generate_farm_health_data(days=7):
     df.set_index("Date", inplace=True)
     return df
 
-
 def assess_risk(humidity_series, temperature_series, ph_series):
-    """
-    Simple heuristic risk assessment. [web:19]
-    """
     avg_h = float(np.mean(humidity_series))
     avg_t = float(np.mean(temperature_series))
     avg_p = float(np.mean(ph_series))
@@ -513,10 +439,9 @@ def assess_risk(humidity_series, temperature_series, ph_series):
 
     return level, reason + ph_comment
 
-
-# ------------------------------------------------
+# ============================================================
 # Header
-# ------------------------------------------------
+# ============================================================
 st.markdown(
     """
     <div class="glass-header">
@@ -558,9 +483,9 @@ tabs = st.tabs(
     ]
 )
 
-# ------------------------------------------------
+# ============================================================
 # Tab 1: AI Diagnosis & Classifier
-# ------------------------------------------------
+# ============================================================
 with tabs[0]:
     st.markdown("### 🔎 AI Diagnosis & Classifier")
 
@@ -583,7 +508,7 @@ with tabs[0]:
         )
         st.metric(
             label="Input Size",
-            value="224 × 224 × 3",
+            value="160 × 160 × 3",
             help="Standard RGB size used during preprocessing.",
         )
 
@@ -594,9 +519,7 @@ with tabs[0]:
         with st.spinner("Processing image and running classifier..."):
             time.sleep(0.6)
             image, img_batch = preprocess_image(uploaded_file)
-            prediction, confidence, diff_list = predict_or_simulate(
-                model_obj, img_batch, class_names
-            )
+            prediction, confidence, diff_list = predict(model_obj, img_batch, class_names)
 
         img_col, result_col = st.columns([1.2, 1])
         with img_col:
@@ -676,9 +599,9 @@ with tabs[0]:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ------------------------------------------------
+# ============================================================
 # Tab 2: Treatment Protocol
-# ------------------------------------------------
+# ============================================================
 with tabs[1]:
     st.markdown("### 🌿 Integrated Treatment Protocol")
 
@@ -711,7 +634,7 @@ with tabs[1]:
         st.markdown("**Symptoms (field-level)**")
         st.markdown("\n".join([f"- {item}" for item in protocol["symptoms"]]))
         st.markdown("")
-        st.markdown("**Causes & Favouring Conditions**")
+        st.markmarkdown("**Causes & Favouring Conditions**")
         st.markdown("\n".join([f"- {item}" for item in protocol["causes"]]))
 
     with col2:
@@ -744,9 +667,9 @@ with tabs[1]:
         unsafe_allow_html=True,
     )
 
-# ------------------------------------------------
+# ============================================================
 # Tab 3: Farm Health Monitor
-# ------------------------------------------------
+# ============================================================
 with tabs[2]:
     st.markdown("### 📊 Farm Health Monitor (Simulated)")
 
